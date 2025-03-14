@@ -1,6 +1,10 @@
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 
 public class DVDCollectionDisplayPanel extends JPanel {
@@ -34,8 +38,22 @@ public class DVDCollectionDisplayPanel extends JPanel {
         for (String parsedDvd : parsedDvds) {
             String[] dvdComponents = parsedDvd.split("/");
             JPanel testPanel = new JPanel();
-            testPanel.setPreferredSize(new Dimension(200, 100));
             testPanel.setBorder(BorderFactory.createLineBorder(Color.BLUE));
+            testPanel.setLayout(new BoxLayout(testPanel, BoxLayout.Y_AXIS));
+            BufferedImage image = null;
+            try {
+                String filename = dvdComponents[0].replaceAll(" ", "_");
+                System.out.println("filename: " + filename);
+                image = ImageIO.read(new File("thumbnails/" + filename + ".jpg"));
+            } catch (IOException e) {
+                try {
+                    image = ImageIO.read(new File("thumbnails/missing.png"));
+                } catch (IOException ex) {
+                    System.err.println("Failed to load thumbnail for missing movies");
+                    continue;
+                }
+            }
+            testPanel.add(new JLabel(new ImageIcon(image.getScaledInstance((int)(image.getWidth() * 0.5), (int)(image.getHeight() * 0.5), Image.SCALE_DEFAULT))));
             testPanel.add(new JLabel(parsedDvd));
             testPanel.addMouseListener(new MouseListener() {
                 public void mouseClicked(MouseEvent e) {
@@ -62,7 +80,7 @@ public class DVDCollectionDisplayPanel extends JPanel {
 
                     System.out.println(Arrays.toString(dvdComponents));
                     String rating = !ratingField.getText().isEmpty() ? ratingField.getText() : dvdComponents[1];
-                    String runningTime = !runningTimeField.getText().isEmpty() ? runningTimeField.getText() : dvdComponents[2].substring(0, dvdComponents.length - 3);
+                    String runningTime = !runningTimeField.getText().isEmpty() ? runningTimeField.getText() : dvdComponents[2].substring(0, dvdComponents[2].length() - 3);
                     System.out.println("Modifying: " + dvdComponents[0] + " with rating=" + rating + ", runningTime=" + runningTime);
                     collection.addOrModifyDVD(dvdComponents[0], rating, runningTime);
                     update();
@@ -81,6 +99,8 @@ public class DVDCollectionDisplayPanel extends JPanel {
 
                 }
             });
+            testPanel.revalidate();
+            testPanel.repaint();
             contentPanel.add(testPanel);
         }
         contentPanel.revalidate();
